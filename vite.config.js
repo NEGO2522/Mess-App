@@ -9,6 +9,19 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  build: {
+    outDir: 'build', // For Vercel compatibility
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          ui: ['react-icons', 'framer-motion', 'react-toastify']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000, // Increase chunk size warning limit
+  },
   resolve: {
     alias: [
       {
