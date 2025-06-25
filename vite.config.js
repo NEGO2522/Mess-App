@@ -5,22 +5,28 @@ import path from 'path';
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './', // Use relative paths for assets
   plugins: [
     tailwindcss(),
     react()
   ],
   build: {
-    outDir: 'build', // For Vercel compatibility
+    outDir: 'build',
+    assetsDir: 'assets',
+    emptyOutDir: true,
     rollupOptions: {
       output: {
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
           firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
           ui: ['react-icons', 'framer-motion', 'react-toastify']
-        }
+        },
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]'
       }
     },
-    chunkSizeWarningLimit: 1000, // Increase chunk size warning limit
+    chunkSizeWarningLimit: 1000,
   },
   resolve: {
     alias: [
