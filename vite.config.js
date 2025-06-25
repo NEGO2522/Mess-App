@@ -1,17 +1,21 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { fileURLToPath } from 'url';
 import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: './', // Use relative paths for assets
+  base: './',
   plugins: [
     tailwindcss(),
     react()
   ],
   build: {
-    outDir: 'build',
+    outDir: 'dist',
     assetsDir: 'assets',
     emptyOutDir: true,
     rollupOptions: {
@@ -20,10 +24,7 @@ export default defineConfig({
           react: ['react', 'react-dom', 'react-router-dom'],
           firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
           ui: ['react-icons', 'framer-motion', 'react-toastify']
-        },
-        entryFileNames: 'assets/[name]-[hash].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash][extname]'
+        }
       }
     },
     chunkSizeWarningLimit: 1000,

@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { FiChevronLeft, FiChevronRight, FiCheck } from 'react-icons/fi';
 
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

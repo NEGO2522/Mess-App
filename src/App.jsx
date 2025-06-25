@@ -93,7 +93,7 @@ function App() {
         }
       } catch (error) {
         console.error('Unexpected error in authentication flow:', error);
-        if (process.env.NODE_ENV !== 'production') {
+        if (import.meta.env.MODE !== 'production') {
           console.error('Full error details:', error);
         }
         
