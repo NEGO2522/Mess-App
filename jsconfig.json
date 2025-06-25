@@ -3,8 +3,7 @@
     "baseUrl": ".",
     "paths": {
       "@components/*": ["src/components/*"],
-      "@pages/*": ["src/pages/*"],
-      "@auth/*": ["src/components/auth-components/*"]
+      "@pages/*": ["src/pages/*"]
     }
   },
   "include": ["src/**/*"],

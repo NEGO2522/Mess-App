@@ -43,10 +43,6 @@ export default defineConfig({
         replacement: path.resolve(__dirname, 'src/pages')
       },
       {
-        find: '@auth',
-        replacement: path.resolve(__dirname, 'src/components/auth-components')
-      },
-      {
         find: '@utils',
         replacement: path.resolve(__dirname, 'src/utils')
       }

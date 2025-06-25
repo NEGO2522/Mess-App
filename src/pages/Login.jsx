@@ -16,7 +16,7 @@ import {
   GoogleSignInButton,
   FeatureCarousel,
   EmailSentConfirmation
-} from '@utils';
+} from '../utils';
 import { Divider } from '../components/UI/Divider';
 
 const features = [
