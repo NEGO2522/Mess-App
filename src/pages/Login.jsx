@@ -11,11 +11,12 @@ import {
 } from '../firebase/firebase';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { AuthForm } from '../components/Auth/AuthForm';
-import { GoogleSignInButton } from '../components/Auth/GoogleSignInButton';
-
-import { FeatureCarousel } from '../components/Auth/FeatureCarousel';
-import { EmailSentConfirmation } from '../components/Auth/EmailSentConfirmation';
+import {
+  AuthForm,
+  GoogleSignInButton,
+  FeatureCarousel,
+  EmailSentConfirmation
+} from '@utils';
 import { Divider } from '../components/UI/Divider';
 
 const features = [
@@ -31,7 +32,6 @@ const features = [
   },
   {
     icon: <FiCoffee className="w-6 h-6" />,
-    title: 'Special Menus',
     title: 'Special Menus',
     description: 'Discover special weekend and festival menus in advance.'
   }
