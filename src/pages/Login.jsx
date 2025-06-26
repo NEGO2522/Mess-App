@@ -1,10 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { FiAlertCircle, FiCoffee, FiClock, FiSun } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthForm } from '../utils';
 import { Divider } from '../components/UI/Divider';
+import { motion, AnimatePresence } from 'framer-motion';
+import { auth, googleProvider } from '../firebase';
+import {
+  signInWithPopup,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+  onAuthStateChanged
+} from "firebase/auth";
 
 const features = [
   {
@@ -24,39 +33,160 @@ const features = [
   }
 ];
 
-const Login = () => {
-  // Authentication state
+// Animated FeatureCarousel
+const FeatureCarousel = ({ features, currentFeature, setCurrentFeature }) => (
+  <div className="mt-8 relative h-32">
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={currentFeature}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.5 }}
+        className="absolute inset-0 flex flex-col items-center justify-center p-6 rounded-xl border border-gray-100"
+      >
+        <div className="flex items-center justify-center w-12 h-12 mb-2 rounded-full bg-blue-100 text-blue-600">
+          {features[currentFeature].icon}
+        </div>
+        <div className="font-semibold">{features[currentFeature].title}</div>
+        <div className="text-xs text-gray-500 text-center">{features[currentFeature].description}</div>
+      </motion.div>
+    </AnimatePresence>
+    <div className="flex justify-center mt-6 space-x-2 relative z-10">
+      {features.map((_, idx) => (
+        <button
+          key={idx}
+          onClick={() => setCurrentFeature(idx)}
+          className={`w-2.5 h-2.5 rounded-full transition-colors ${
+            idx === currentFeature ? 'bg-blue-600 w-6' : 'bg-gray-300'
+          }`}
+          aria-label={`Go to feature ${idx + 1}`}
+        />
+      ))}
+    </div>
+  </div>
+);
+
+const GoogleSignInButton = ({ onClick, disabled }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className="w-full flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition"
+    style={{ boxShadow: '0 1px 2px rgba(60,64,67,.08)' }}
+  >
+    <span className="mr-2 flex items-center">
+      <svg width="20" height="20" viewBox="0 0 48 48">
+        <g>
+          <path fill="#4285F4" d="M43.6 20.5h-1.9V20H24v8h11.3c-1.6 4.3-5.7 7-11.3 7-6.6 0-12-5.4-12-12s5.4-12 12-12c2.6 0 5 .8 7 2.3l5.7-5.7C34.1 6.5 29.3 4.5 24 4.5 12.7 4.5 3.5 13.7 3.5 25S12.7 45.5 24 45.5c11 0 20.5-8.5 20.5-20.5 0-1.4-.1-2.7-.4-4z"/>
+          <path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.5 16.1 18.9 13 24 13c2.6 0 5 .8 7 2.3l5.7-5.7C34.1 6.5 29.3 4.5 24 4.5c-7.1 0-13.2 3.6-16.7 9.2z"/>
+          <path fill="#FBBC05" d="M24 45.5c5.3 0 10.1-1.8 13.8-4.9l-6.4-5.2c-2 1.4-4.5 2.2-7.4 2.2-5.6 0-10.3-3.8-12-8.9l-6.6 5.1C7.1 41.4 14.9 45.5 24 45.5z"/>
+          <path fill="#EA4335" d="M43.6 20.5h-1.9V20H24v8h11.3c-1.1 3-3.6 5.2-6.6 6.2l6.4 5.2c3.7-3.4 6-8.4 6-14.4 0-1.4-.1-2.7-.4-4z"/>
+        </g>
+      </svg>
+    </span>
+    Continue with Google
+  </button>
+);
+
+const EmailSentConfirmation = ({ email, onBack }) => (
+  <div className="text-center">
+    <p>We've sent a sign-in link to {email}.</p>
+    <button onClick={onBack} className="mt-4 text-blue-600 underline">Back</button>
+  </div>
+);
+
+const actionCodeSettings = {
+  url: window.location.origin + '/home',
+  handleCodeInApp: true,
+};
+
+const Login = ({ setIsAuthenticated }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [currentFeature, setCurrentFeature] = useState(0);
+  const [isEmailSent, setIsEmailSent] = useState(false);
   const navigate = useNavigate();
 
-  // Handle email/password sign in
-  const handleEmailSignIn = (e) => {
+  // Animate features one by one
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentFeature((prev) => (prev + 1) % features.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setLoading(false);
+      if (user) {
+        setIsAuthenticated(true);
+      }
+    });
+    return () => unsubscribe();
+  }, [setIsAuthenticated]);
+
+  // Handle email link sign-in
+  const handleSendSignInLink = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    // For demo purposes, we'll just show a success message
-    setTimeout(() => {
+    setIsSubmitting(true);
+    setLoginError('');
+    try {
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      window.localStorage.setItem('emailForSignIn', email);
       setEmailSent(true);
-      toast.success('Sign-in link would be sent to your email in production');
-      setIsLoading(false);
-    }, 1000);
+      setIsEmailSent(true);
+      toast.success('Sign-in link sent to your email');
+    } catch (error) {
+      setLoginError(error.message);
+    }
+    setIsSubmitting(false);
   };
 
-  // Handle Google sign in
-  const handleGoogleSignIn = () => {
-    // For demo purposes, we'll just navigate to home
-    toast.success('Google sign-in would be handled in production');
-    navigate('/');
+  // Handle Google sign-in
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      setIsAuthenticated(true);
+      navigate('/home');
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-    </div>
-  );
+  // Complete email link sign-in if user clicks the link from email
+  useEffect(() => {
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      let email = window.localStorage.getItem('emailForSignIn');
+      if (!email) {
+        email = window.prompt('Please provide your email for confirmation');
+      }
+      if (email) {
+        signInWithEmailLink(auth, email, window.location.href)
+          .then(() => {
+            window.localStorage.removeItem('emailForSignIn');
+            setIsAuthenticated(true);
+            navigate('/home');
+          })
+          .catch((error) => {
+            setLoginError(error.message);
+          });
+      }
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
 
   if (currentUser) return <Navigate to="/home" replace />;
 
@@ -68,18 +198,17 @@ const Login = () => {
           <Link to="/" className="text-2xl font-bold text-blue-600 mb-8 inline-block">
             Mess App
           </Link>
-          
           <div className="rounded-2xl overflow-hidden shadow-xl mb-8">
-            <img 
-              src="https://im.whatshot.in/img/2020/May/punjabi-mess-3-cropped-1568798950-1590740061.jpg" 
+            <img
+              src="https://im.whatshot.in/img/2020/May/punjabi-mess-3-cropped-1568798950-1590740061.jpg"
               alt="Delicious Mess Food"
               className="w-full h-auto object-cover"
             />
           </div>
-          <FeatureCarousel 
-            features={features} 
-            currentFeature={0} 
-            setCurrentFeature={() => {}}
+          <FeatureCarousel
+            features={features}
+            currentFeature={currentFeature}
+            setCurrentFeature={setCurrentFeature}
           />
         </div>
       </div>
@@ -93,19 +222,18 @@ const Login = () => {
               Mess App
             </Link>
           </div>
-          
+
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               {emailSent ? 'Check your email' : 'Welcome back'}
             </h1>
             <p className="text-gray-600">
-              {emailSent 
+              {emailSent
                 ? `We've sent a sign-in link to ${email}.`
                 : 'Sign in to continue to your account'}
             </p>
           </div>
 
-          {/* Google Sign In Button */}
           <Divider />
 
           {loginError && (
@@ -117,9 +245,9 @@ const Login = () => {
 
           {!isEmailSent ? (
             <>
-              <AuthForm 
+              <AuthForm
                 email={email}
-                setEmail={handleEmailChange}
+                setEmail={setEmail} // <-- This makes the email input editable
                 onSubmit={handleSendSignInLink}
                 isSubmitting={isSubmitting}
                 loginError={loginError}
@@ -128,16 +256,17 @@ const Login = () => {
               <Divider text="or continue with" />
 
               <div className="space-y-4 mt-6">
-                <GoogleSignInButton 
-                  onClick={handleGoogleSignIn} 
-                  disabled={isSubmitting} 
+                <GoogleSignInButton
+                  onClick={handleGoogleSignIn}
+                  disabled={isSubmitting}
                 />
               </div>
             </>
           ) : (
-            <EmailSentConfirmation 
+            <EmailSentConfirmation
               email={email}
               onBack={() => {
+                setEmailSent(false);
                 setIsEmailSent(false);
                 setLoginError('');
               }}

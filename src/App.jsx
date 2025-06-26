@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -8,14 +8,10 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Protected Route Component
-const ProtectedRoute = ({ children }) => {
-  // For demo purposes, we'll consider the user always authenticated
-  const isAuthenticated = true;
-  
+const ProtectedRoute = ({ children, isAuthenticated }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
-// Main App component that wraps everything with Router
 function AppWrapper() {
   return (
     <Router>
@@ -25,18 +21,26 @@ function AppWrapper() {
 }
 
 function App() {
-  // For demo purposes, we'll consider the user always authenticated
-  const isAuthenticated = true;
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Routes>
-        <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/home" />} />
-        <Route path="/" element={!isAuthenticated ? <Landing /> : <Navigate to="/home" />} />
+        <Route path="/" element={<Landing />} />
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/home" />
+            ) : (
+              <Login setIsAuthenticated={setIsAuthenticated} />
+            )
+          }
+        />
         <Route
           path="/home/*"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
               <Home />
             </ProtectedRoute>
           }
@@ -44,12 +48,12 @@ function App() {
         <Route
           path="/rules"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
               <RulesPage />
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to={isAuthenticated ? "/home" : "/"} />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
   );

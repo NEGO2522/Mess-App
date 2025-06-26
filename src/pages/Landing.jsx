@@ -109,10 +109,10 @@ const Landing = () => {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
           >
-            <Link to="/home" className="w-full sm:w-auto">
+            <Link to="/login" className="w-full sm:w-auto">
               <button className="group relative w-full sm:w-auto flex items-center justify-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
                 <span className="relative z-10 flex items-center">
-                  View Weekly Menu
+                  Continue to Login
                   <FiArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
                 </span>
                 <span className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
