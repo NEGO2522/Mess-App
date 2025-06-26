@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/Mess-App/', // <-- Set to your repo name for GitHub Pages
+  base: '/', // <-- Set to your repo name for GitHub Pages
   plugins: [
     tailwindcss(),
     react({
