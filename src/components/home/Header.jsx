@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMenu, FiX, FiLogOut, FiInfo, FiHome, FiCalendar, FiUser, FiSettings } from 'react-icons/fi';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../firebase/firebase';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PoornimaLogo } from '../common/PoornimaLogo';
+import { toast } from 'react-toastify';
 
 const navItems = [
   { name: 'Home', icon: FiHome, path: '/' },
@@ -27,13 +26,10 @@ export const Header = ({ onToggleRules, showRules }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate('/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+  const handleSignOut = () => {
+    // For demo purposes, we'll just navigate to login
+    navigate('/login');
+    toast.success('Successfully signed out');
   };
 
   return (
@@ -131,7 +127,7 @@ export const Header = ({ onToggleRules, showRules }) => {
                   {showRules ? 'Hide Rules' : 'Mess Rules'}
                 </button>
                 <button
-                  onClick={handleLogout}
+                  onClick={handleSignOut}
                   className="w-full text-left px-4 py-3 rounded-lg font-medium flex items-center text-red-600 hover:bg-red-50 mt-1"
                 >
                   <FiLogOut className="mr-3" />

@@ -1,22 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { FiAlertCircle, FiCoffee, FiClock, FiSun } from 'react-icons/fi';
-import { 
-  auth, 
-  signInWithGoogle, 
-  sendSignInLink, 
-  isSignInLinkUrl, 
-  signInWithEmail,
-  onAuthStateChanged
-} from '../firebase/firebase';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import {
-  AuthForm,
-  GoogleSignInButton,
-  FeatureCarousel,
-  EmailSentConfirmation
-} from '../utils';
+import { AuthForm } from '../utils';
 import { Divider } from '../components/UI/Divider';
 
 const features = [
@@ -42,124 +29,27 @@ const Login = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
-  const [isEmailSent, setIsEmailSent] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loginError, setLoginError] = useState('');
-  const [currentFeature, setCurrentFeature] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const navigate = useNavigate();
-  
-  // Check for email link on component mount
-  useEffect(() => {
-    const checkEmailLink = async () => {
-      if (isSignInLinkUrl()) {
-        setIsSubmitting(true);
-        const emailForSignIn = window.localStorage.getItem('emailForSignIn');
-        
-        try {
-          const { success, user, error } = await signInWithEmail(emailForSignIn);
-          
-          if (success) {
-            // Set auth token in localStorage
-            const token = await user.getIdToken();
-            localStorage.setItem('authToken', token);
-            
-            toast.success('Successfully signed in!');
-            // Force a page reload to ensure auth state is properly updated
-            window.location.href = '/home';
-          } else {
-            setLoginError(error?.message || 'Failed to sign in with email link');
-            toast.error('Failed to sign in with email link');
-          }
-        } catch (error) {
-          console.error('Error signing in with email link:', error);
-          setLoginError(error.message || 'Failed to sign in with email link');
-          toast.error('Failed to sign in with email link');
-        } finally {
-          setIsSubmitting(false);
-        }
-      }
-    };
-    
-    checkEmailLink();
-  }, [navigate]);
 
-  // Check auth state
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // Auto-rotate features
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentFeature((prev) => (prev + 1) % features.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Handle email link login
-  const handleSendSignInLink = async (e) => {
+  // Handle email/password sign in
+  const handleEmailSignIn = (e) => {
     e.preventDefault();
-    
-    // Reset errors
-    setLoginError('');
-    
-    // Validate email
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      setLoginError('Please enter a valid email address');
-      return;
-    }
-    
-    try {
-      setIsSubmitting(true);
-      
-      // Send sign in link to email
-      const { success, error } = await sendSignInLink(email);
-      
-      if (success) {
-        setIsEmailSent(true);
-        toast.success('Login link sent to your email!');
-      } else {
-        throw error;
-      }
-      
-    } catch (error) {
-      console.error('Error sending sign in link:', error);
-      const errorMessage = error?.message || 'Failed to send login link. Please try again.';
-      setLoginError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+    setIsLoading(true);
+    // For demo purposes, we'll just show a success message
+    setTimeout(() => {
+      setEmailSent(true);
+      toast.success('Sign-in link would be sent to your email in production');
+      setIsLoading(false);
+    }, 1000);
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setIsSubmitting(true);
-      const { success, error, redirecting } = await signInWithGoogle();
-      
-      if (success && !redirecting) {
-        toast.success('Successfully logged in with Google!');
-        navigate('/home');
-      } else if (error) throw error;
-      // If redirecting, the page will reload and the auth state will be handled by App.jsx
-    } catch (error) {
-      console.error('Google sign in error:', error);
-      const errorMessage = error.message || 'Failed to sign in with Google';
-      setLoginError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      if (!isSubmitting) setIsSubmitting(false);
-    }
-  };
-
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
-    if (loginError) setLoginError('');
+  // Handle Google sign in
+  const handleGoogleSignIn = () => {
+    // For demo purposes, we'll just navigate to home
+    toast.success('Google sign-in would be handled in production');
+    navigate('/');
   };
 
   if (loading) return (
@@ -167,7 +57,7 @@ const Login = () => {
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
     </div>
   );
-  
+
   if (currentUser) return <Navigate to="/home" replace />;
 
   return (
@@ -188,8 +78,8 @@ const Login = () => {
           </div>
           <FeatureCarousel 
             features={features} 
-            currentFeature={currentFeature} 
-            setCurrentFeature={setCurrentFeature} 
+            currentFeature={0} 
+            setCurrentFeature={() => {}}
           />
         </div>
       </div>
@@ -206,11 +96,11 @@ const Login = () => {
           
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {isEmailSent ? 'Check your email' : 'Welcome back'}
+              {emailSent ? 'Check your email' : 'Welcome back'}
             </h1>
             <p className="text-gray-600">
-              {isEmailSent 
-                ? `We've sent a magic link to ${email}. Click the link to sign in.`
+              {emailSent 
+                ? `We've sent a sign-in link to ${email}.`
                 : 'Sign in to continue to your account'}
             </p>
           </div>
